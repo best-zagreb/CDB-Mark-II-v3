@@ -26,8 +26,107 @@ import {
   SchoolRounded as SchoolRoundedIcon,
 } from "@mui/icons-material";
 
-import { useState } from "react";
+import { useState, useContext } from "react";
 import moment from "moment";
+
+import UserContext from "../../../context/UserContext";
+
+function getFormatedCellValue(column, value) {
+  if (column.key === "frresp") {
+    return value.firstName + " " + value.lastName;
+  } else if (column.key === "webUrl") {
+    return (
+      <Link href={value} target="_blank">
+        {value}
+      </Link>
+    );
+  } else if (column.key === "endDate") {
+    return moment(value).format("DD.MM.YYYY.");
+  } else if (column.key === "comment") {
+    return (
+      <Tooltip title={value}>
+        <span>{value}</span>
+      </Tooltip>
+    );
+  } else if (
+    column.key === "category" &&
+    (value.includes("FINANCIAL") ||
+      value.includes("MATERIAL") ||
+      value.includes("ACADEMIC"))
+  ) {
+    const iconAttributes = {
+      sx: { color: "#1976d2" },
+    };
+    const icons = [];
+    if (value.includes("FINANCIAL")) {
+      icons.push(
+        <Tooltip title={"Financial"} key="Financial">
+          <AttachMoneyIcon {...iconAttributes} />
+        </Tooltip>
+      );
+    }
+    if (value.includes("MATERIAL")) {
+      icons.push(
+        <Tooltip title={"Material"} key="Material">
+          <ShoppingBagIcon {...iconAttributes} />
+        </Tooltip>
+      );
+    }
+    if (value.includes("ACADEMIC")) {
+      icons.push(
+        <Tooltip title={"Academic"} key="Academic">
+          <SchoolRoundedIcon {...iconAttributes} />
+        </Tooltip>
+      );
+    }
+
+    return icons;
+  } else if (column.key === "status") {
+    const iconAttributes = {
+      fontSize: "large",
+      sx: { color: "#1976d2" },
+    };
+
+    let icon = null;
+    let tooltipText = (
+      value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
+    )
+      .split("_")
+      .join(" ");
+
+    switch (value) {
+      case "TODO":
+        icon = <AssignmentTurnedInIcon {...iconAttributes} />;
+        break;
+      case "CONTACTED":
+        icon = <CallIcon {...iconAttributes} />;
+        break;
+      case "PINGED":
+        icon = <RepeatIcon {...iconAttributes} />;
+        break;
+      case "OFFER_SENT":
+        icon = <EmailIcon {...iconAttributes} />;
+        break;
+      case "MEETING_HELD":
+        icon = <WorkIcon {...iconAttributes} />;
+        break;
+      case "SUCCESSFUL":
+        icon = <AttachMoneyIcon {...iconAttributes} />;
+        break;
+      case "UNSUCCESSFUL":
+        icon = <MoneyOffIcon {...iconAttributes} />;
+        break;
+      default:
+        icon = <ErrorIcon {...iconAttributes} />;
+        tooltipText = "Unknown status: " + value;
+        break;
+    }
+
+    return <Tooltip title={tooltipText}>{icon}</Tooltip>;
+  } else {
+    return value;
+  }
+}
 
 export default function TableComponent({
   tableColumns,
@@ -37,6 +136,8 @@ export default function TableComponent({
   handleEdit,
   handleDelete,
 }) {
+  const { user } = useContext(UserContext);
+
   const [sortBy, setSortBy] = useState("");
   const [sortDirection, setSortDirection] = useState("desc");
 
@@ -80,103 +181,6 @@ export default function TableComponent({
     );
   }
 
-  function getFormatedCellValue(column, value) {
-    if (column.key === "frresp") {
-      return value.firstName + " " + value.lastName;
-    } else if (column.key === "webUrl") {
-      return (
-        <Link href={value} target="_blank">
-          {value}
-        </Link>
-      );
-    } else if (column.key === "endDate") {
-      return moment(value).format("DD.MM.YYYY.");
-    } else if (column.key === "comment") {
-      return (
-        <Tooltip title={value}>
-          <span>{value}</span>
-        </Tooltip>
-      );
-    } else if (
-      column.key === "category" &&
-      (value.includes("FINANCIAL") ||
-        value.includes("MATERIAL") ||
-        value.includes("ACADEMIC"))
-    ) {
-      const iconAttributes = {
-        sx: { color: "#1976d2" },
-      };
-      const icons = [];
-      if (value.includes("FINANCIAL")) {
-        icons.push(
-          <Tooltip title={"Financial"} key="Financial">
-            <AttachMoneyIcon {...iconAttributes} />
-          </Tooltip>
-        );
-      }
-      if (value.includes("MATERIAL")) {
-        icons.push(
-          <Tooltip title={"Material"} key="Material">
-            <ShoppingBagIcon {...iconAttributes} />
-          </Tooltip>
-        );
-      }
-      if (value.includes("ACADEMIC")) {
-        icons.push(
-          <Tooltip title={"Academic"} key="Academic">
-            <SchoolRoundedIcon {...iconAttributes} />
-          </Tooltip>
-        );
-      }
-
-      return icons;
-    } else if (column.key === "status") {
-      const iconAttributes = {
-        fontSize: "large",
-        sx: { color: "#1976d2" },
-      };
-
-      let icon = null;
-      let tooltipText = (
-        value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
-      )
-        .split("_")
-        .join(" ");
-
-      switch (value) {
-        case "TODO":
-          icon = <AssignmentTurnedInIcon {...iconAttributes} />;
-          break;
-        case "CONTACTED":
-          icon = <CallIcon {...iconAttributes} />;
-          break;
-        case "PINGED":
-          icon = <RepeatIcon {...iconAttributes} />;
-          break;
-        case "OFFER_SENT":
-          icon = <EmailIcon {...iconAttributes} />;
-          break;
-        case "MEETING_HELD":
-          icon = <WorkIcon {...iconAttributes} />;
-          break;
-        case "SUCCESSFUL":
-          icon = <AttachMoneyIcon {...iconAttributes} />;
-          break;
-        case "UNSUCCESSFUL":
-          icon = <MoneyOffIcon {...iconAttributes} />;
-          break;
-        default:
-          icon = <ErrorIcon {...iconAttributes} />;
-          tooltipText = "Unknown status: " + value;
-          break;
-      }
-
-      return <Tooltip title={tooltipText}>{icon}</Tooltip>;
-    } else {
-      return value;
-    }
-  }
-
   return (
     <Table
       stickyHeader
@@ -187,39 +191,44 @@ export default function TableComponent({
     >
       <TableHead>
         <TableRow>
-          {tableColumns.map((column) => (
-            <TableCell
-              key={column.key}
-              sx={{
-                display: {
-                  xs: column.xsHide ? "none" : "table-cell",
-                  md: column.mdHide ? "none" : "table-cell",
-                  lg: "table-cell",
-                },
-                padding: 0.5,
+          {tableColumns.map(
+            (column) =>
+              (!column.minAuthLevel ||
+                user?.maxAuthLevel >= column.minAuthLevel) && (
+                <TableCell
+                  key={column.key}
+                  sx={{
+                    display: {
+                      xs: column.xsHide ? "none" : "table-cell",
+                      md: column.mdHide ? "none" : "table-cell",
+                      lg: "table-cell",
+                    },
+                    padding: 0.5,
 
-                width: "min-content",
+                    width: "min-content",
 
-                textAlign: column.centerContent && "center",
+                    textAlign: column.centerContent && "center",
 
-                whiteSpace: "nowrap",
-              }}
-            >
-              {column.notSortable ? (
-                column.label
-              ) : (
-                <TableSortLabel
-                  active={sortBy === column.key}
-                  direction={sortBy === column.key ? sortDirection : "desc"}
-                  onClick={() => handleSort(column)}
+                    whiteSpace: "nowrap",
+                  }}
                 >
-                  {column.label}
-                </TableSortLabel>
-              )}
-            </TableCell>
-          ))}
-
-          <TableCell align="center">Actions</TableCell>
+                  {column.notSortable ? (
+                    column.label
+                  ) : (
+                    <TableSortLabel
+                      active={sortBy === column.key}
+                      direction={sortBy === column.key ? sortDirection : "desc"}
+                      onClick={() => handleSort(column)}
+                    >
+                      {column.label}
+                    </TableSortLabel>
+                  )}
+                </TableCell>
+              )
+          )}
+          {(handleView || handleEdit || handleDelete) && (
+            <TableCell align="center">Actions</TableCell>
+          )}
         </TableRow>
       </TableHead>
       <TableBody>
@@ -229,109 +238,113 @@ export default function TableComponent({
               const cellValue = result[column.key];
 
               return (
-                <TableCell
-                  key={column.key}
-                  sx={{
-                    display: {
-                      xs: column.xsHide ? "none" : "table-cell",
-                      md: column.mdHide ? "none" : "table-cell",
-                      lg: "table-cell",
-                    },
+                (!column.minAuthLevel ||
+                  user?.maxAuthLevel >= column.minAuthLevel) && (
+                  <TableCell
+                    key={column.key}
+                    sx={{
+                      display: {
+                        xs: column.xsHide ? "none" : "table-cell",
+                        md: column.mdHide ? "none" : "table-cell",
+                        lg: "table-cell",
+                      },
 
-                    padding: 0.5,
+                      padding: 0.5,
 
-                    backgroundColor: result.priority && "whitesmoke",
+                      backgroundColor: result.priority && "whitesmoke",
 
-                    textAlign: column.centerContent && "center",
+                      textAlign: column.centerContent && "center",
 
-                    width: "min-content",
+                      width: "min-content",
 
-                    overflow: "hidden",
-                    textOverflow: column.showTooltip ? "ellipsis" : "unset",
-                    whiteSpace: column.showTooltip ? "nowrap" : "unset",
-                    maxWidth: column.showTooltip ? "30ch" : "60ch", // required so the cell doesnt overflow
-                  }}
-                >
-                  {getFormatedCellValue(column, cellValue)}
-                </TableCell>
+                      overflow: "hidden",
+                      textOverflow: column.showTooltip ? "ellipsis" : "unset",
+                      whiteSpace: column.showTooltip ? "nowrap" : "unset",
+                      maxWidth: column.showTooltip ? "30ch" : "60ch", // required so the cell doesnt overflow
+                    }}
+                  >
+                    {getFormatedCellValue(column, cellValue)}
+                  </TableCell>
+                )
               );
             })}
-
-            <TableCell
-              sx={{
-                padding: 0.5,
-
-                backgroundColor: result.priority ? "whitesmoke" : "inherit",
-              }}
-            >
-              <Box
+            {(handleView || handleEdit || handleDelete) && (
+              <TableCell
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 0.5,
-
                   padding: 0.5,
 
                   backgroundColor: result.priority ? "whitesmoke" : "inherit",
                 }}
               >
-                {handleView && (
-                  <Tooltip title="Details" key="Details">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleView(result)}
-                      sx={{
-                        color: "white",
-                        backgroundColor: "#1976d2",
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 0.5,
 
-                        borderRadius: 1,
+                    padding: 0.5,
 
-                        width: { xs: 20, md: "unset" },
-                      }}
-                    >
-                      <DetailsIcon />
-                    </IconButton>
-                  </Tooltip>
-                )}
-                {handleEdit && (
-                  <Tooltip title="Edit" key="Edit">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleEdit(result)}
-                      sx={{
-                        color: "white",
-                        backgroundColor: "#1976d2",
+                    backgroundColor: result.priority ? "whitesmoke" : "inherit",
+                  }}
+                >
+                  {handleView && (
+                    <Tooltip title="Details" key="Details">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleView(result)}
+                        sx={{
+                          color: "white",
+                          backgroundColor: "#1976d2",
 
-                        borderRadius: 1,
+                          borderRadius: 1,
 
-                        width: { xs: 20, md: "unset" },
-                      }}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                  </Tooltip>
-                )}
-                {handleDelete && (
-                  <Tooltip title="Delete">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDelete(result)}
-                      sx={{
-                        color: "white",
-                        backgroundColor: "#1976d2",
+                          width: { xs: 20, md: "unset" },
+                        }}
+                      >
+                        <DetailsIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  {handleEdit && (
+                    <Tooltip title="Edit" key="Edit">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEdit(result)}
+                        sx={{
+                          color: "white",
+                          backgroundColor: "#1976d2",
 
-                        borderRadius: 1,
+                          borderRadius: 1,
 
-                        width: { xs: 20, md: "unset" },
-                      }}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </Box>
-            </TableCell>
+                          width: { xs: 20, md: "unset" },
+                        }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  {handleDelete && (
+                    <Tooltip title="Delete">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDelete(result)}
+                        sx={{
+                          color: "white",
+                          backgroundColor: "#1976d2",
+
+                          borderRadius: 1,
+
+                          width: { xs: 20, md: "unset" },
+                        }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Box>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>

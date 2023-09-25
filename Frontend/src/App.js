@@ -26,6 +26,24 @@ import Header from "./components/Header";
 import Toast from "./components/Toast";
 import DeleteAlert from "./components/forms/DeleteAlert";
 
+// return maxAuthLevel number based on authority
+function getMaxAuthLevel(authority) {
+  switch (authority) {
+    case "OBSERVER":
+      return 0;
+    case "PROJECT_MEMBER":
+      return 1;
+    case "PROJECT_RESPONSIBLE":
+      return 2;
+    case "MODERATOR":
+      return 3;
+    case "ADMINISTRATOR":
+      return 4;
+    default:
+      return -1; // Handle any other authority values as needed
+  }
+}
+
 export default function App() {
   const { setUser } = useContext(UserContext);
   const { handleOpenToast } = useContext(ToastContext);
@@ -62,8 +80,12 @@ export default function App() {
         };
         localStorage.setItem("loginInfo", JSON.stringify(loginInfo));
 
-        const json = await serverResponse.json();
-        setUser(json);
+        const userData = await serverResponse.json();
+        const updatedUserData = {
+          ...userData,
+          maxAuthLevel: getMaxAuthLevel(userData.authority),
+        };
+        setUser(updatedUserData);
 
         setUserIsLoggedIn(true);
       } else if (serverResponse.status === 404) {

@@ -10,6 +10,7 @@ import { AddCircle as AddCircleIcon } from "@mui/icons-material";
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 
+import UserContext from "../../context/UserContext";
 import ToastContext from "../../context/ToastContext";
 import DeleteAlertContext from "../../context/DeleteAlertContext";
 
@@ -23,12 +24,13 @@ const tableColumns = [
   { key: "category", label: "Category", xsHide: true },
   { key: "frresp", label: "Project responsible" },
   { key: "endDate", label: "Project end date", xsHide: true },
-  { key: "frgoal", label: "FR goal", xsHide: true },
+  { key: "frgoal", label: "Project goal", xsHide: true, minAuthLevel: 3 },
 ];
 
 export default function Projects() {
   const navigate = useNavigate();
 
+  const { user } = useContext(UserContext);
   const { handleOpenToast } = useContext(ToastContext);
   const { setOpenDeleteAlert, setObject, setEndpoint, setFetchUpdatedData } =
     useContext(DeleteAlertContext);
@@ -120,17 +122,19 @@ export default function Projects() {
           setSearchResults={setSearchResults}
         />
 
-        <Button
-          variant="contained"
-          size="medium"
-          startIcon={<AddCircleIcon />}
-          onClick={() => {
-            setProject();
-            setOpenFormModal(true);
-          }}
-        >
-          Add project
-        </Button>
+        {user?.maxAuthLevel >= 3 && (
+          <Button
+            variant="contained"
+            size="medium"
+            startIcon={<AddCircleIcon />}
+            onClick={() => {
+              setProject();
+              setOpenFormModal(true);
+            }}
+          >
+            Add project
+          </Button>
+        )}
       </Container>
 
       <Container maxWidth="false">
@@ -138,19 +142,19 @@ export default function Projects() {
           <Box sx={{ display: "grid", placeItems: "center" }}>
             <CircularProgress size={100} />
           </Box>
-        ) : data?.length <= 0 ? (
-          <Typography variant="h4" align="center">
-            {"No projects :("}
-          </Typography>
-        ) : (
+        ) : data?.length > 0 ? (
           <TableComponent
             tableColumns={tableColumns}
             searchResults={searchResults}
             setSearchResults={setSearchResults}
-            handleView={handleView}
-            handleEdit={handleEdit}
-            handleDelete={handleDelete}
-          ></TableComponent>
+            handleView={user.maxAuthLevel >= 0 && handleView}
+            handleEdit={user.maxAuthLevel >= 4 && handleEdit}
+            handleDelete={user.maxAuthLevel >= 4 && handleDelete}
+          />
+        ) : (
+          <Typography variant="h4" align="center">
+            {"No projects :("}
+          </Typography>
         )}
       </Container>
     </>

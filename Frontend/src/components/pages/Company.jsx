@@ -32,6 +32,7 @@ import {
 import { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import UserContext from "../../context/UserContext";
 import ToastContext from "../../context/ToastContext";
 import DeleteAlertContext from "../../context/DeleteAlertContext";
 
@@ -84,13 +85,13 @@ const tableColumns = [
   },
 ];
 
-function handleEditContact(e, id) {
+function handleEditContact(id) {
   // TODO: make a PUT request na /companies/{id}/contacts/{id} and then update contacts list
   console.log("Editing a contact is not yet implemented!");
   // setEditFormModal(true);
 }
 
-function handleDeleteContact(e, id) {
+function handleDeleteContact(id) {
   // TODO: make a DELETE request na /companies/{id}/contacts/{id} and then update contacts list
   console.log("Deleting a contact is not yet implemented!");
 }
@@ -99,6 +100,7 @@ export default function Company() {
   const { companyId } = useParams();
   const navigate = useNavigate();
 
+  const { user } = useContext(UserContext);
   const { handleOpenToast } = useContext(ToastContext);
   const { setOpenDeleteAlert, setObject, setEndpoint, setFetchUpdatedData } =
     useContext(DeleteAlertContext);
@@ -113,9 +115,12 @@ export default function Company() {
 
   const [searchResults, setSearchResults] = useState([]);
 
+  const [loading, setLoading] = useState(true);
   const [loadingSoftLockButton, setLoadingSoftLockButton] = useState(false);
 
   async function fetchCompany() {
+    setLoading(true);
+
     const JWToken = JSON.parse(localStorage.getItem("loginInfo")).JWT;
 
     try {
@@ -146,6 +151,8 @@ export default function Company() {
         info: "An error occurred whilst trying to connect to server.",
       });
     }
+
+    setLoading(false);
   }
 
   function handleEditCompany() {
@@ -371,224 +378,248 @@ export default function Company() {
               {company.name}
             </Typography>
 
-            <Accordion defaultExpanded sx={{ marginBlock: 2 }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography
-                  sx={{
-                    textTransform: "uppercase",
-                  }}
-                >
-                  COMPANY INFO
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <List dense>
-                  <ListItem disablePadding>
-                    <ListItemText primary={"Sector: " + company.sector} />
-                  </ListItem>
-
-                  <ListItem disablePadding>
-                    <ListItemText
-                      primary={"ABC Category: " + company.abcCategory}
-                    />
-                  </ListItem>
-
-                  <ListItem disablePadding>
-                    <ListItemText
-                      primary={
-                        "Budget planning month: " + company.budgetPlanningMonth
-                      }
-                    />
-                  </ListItem>
-
-                  <ListItem disablePadding>
-                    <ListItemText primary={"Country: " + company.country} />
-                  </ListItem>
-
-                  <ListItem disablePadding>
-                    <ListItemText primary={"Town: " + company.townName} />
-                  </ListItem>
-
-                  <ListItem disablePadding>
-                    <ListItemText primary={"Address: " + company.address} />
-                  </ListItem>
-
-                  <ListItem disablePadding>
-                    <ListItemText
-                      primary={
-                        <Typography sx={{ fontSize: 10.5 }}>
-                          Web:{" "}
-                          <Link
-                            href={company.webURL}
-                            underline="hover"
-                            target="_blank"
-                            rel="noopener"
-                          >
-                            {company.webURL}
-                          </Link>
-                        </Typography>
-                      }
-                    />
-                  </ListItem>
-
-                  <ListItem disablePadding>
-                    <ListItemText
-                      primary={"Description: " + company.description}
-                      sx={{ maxHeight: 60, overflowY: "auto" }}
-                    />
-                  </ListItem>
-                </List>
-
-                {company.contactInFuture === false && (
+            {/* TODO: user.maxAuthLevel >= 2 
+            || (user.maxAuthLevel >= 1 && user is responsible for that company) */}
+            {user?.maxAuthLevel >= 2 && (
+              <Accordion defaultExpanded>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography
                     sx={{
-                      marginTop: 1,
-
-                      fontWeight: 700,
-                      fontSize: "1.375rem",
-                      textAlign: "center",
-                      color: "red",
+                      textTransform: "uppercase",
                     }}
                   >
-                    DO NOT CONTACT
+                    COMPANY INFO
                   </Typography>
-                )}
-              </AccordionDetails>
-            </Accordion>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <List dense>
+                    <ListItem disablePadding>
+                      <ListItemText primary={"Sector: " + company.sector} />
+                    </ListItem>
 
-            <Accordion
-              sx={{
-                marginBlock: 2,
-              }}
-            >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography
-                  sx={{
-                    textTransform: "uppercase",
-                  }}
-                >
-                  CONTACTS
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                {company.contacts?.map((contact) => (
-                  <Box key={contact.id} sx={{ marginBlock: 2 }}>
-                    <Box
+                    <ListItem disablePadding>
+                      <ListItemText
+                        primary={"ABC Category: " + company.abcCategory}
+                      />
+                    </ListItem>
+
+                    <ListItem disablePadding>
+                      <ListItemText
+                        primary={
+                          "Budget planning month: " +
+                          company.budgetPlanningMonth
+                        }
+                      />
+                    </ListItem>
+
+                    <ListItem disablePadding>
+                      <ListItemText primary={"Country: " + company.country} />
+                    </ListItem>
+
+                    <ListItem disablePadding>
+                      <ListItemText primary={"Town: " + company.townName} />
+                    </ListItem>
+
+                    <ListItem disablePadding>
+                      <ListItemText primary={"Address: " + company.address} />
+                    </ListItem>
+
+                    <ListItem disablePadding>
+                      <ListItemText
+                        primary={
+                          <Typography sx={{ fontSize: 10.5 }}>
+                            Web:{" "}
+                            <Link
+                              href={company.webURL}
+                              underline="hover"
+                              target="_blank"
+                              rel="noopener"
+                            >
+                              {company.webURL}
+                            </Link>
+                          </Typography>
+                        }
+                      />
+                    </ListItem>
+
+                    <ListItem disablePadding>
+                      <ListItemText
+                        primary={"Description: " + company.description}
+                        sx={{ maxHeight: 60, overflowY: "auto" }}
+                      />
+                    </ListItem>
+                  </List>
+
+                  {company.contactInFuture === false && (
+                    <Typography
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
+                        marginTop: 1,
+
+                        fontWeight: 700,
+                        fontSize: "1.375rem",
+                        textAlign: "center",
+                        color: "red",
                       }}
                     >
-                      <Typography>
-                        {contact.firstName + " " + contact.lastName}
-                      </Typography>
-                      <Box>
-                        <IconButton
-                          disabled={company.softLocked}
-                          aria-label="edit contact"
-                          onClick={(e) => handleEditContact(e, contact.id)}
-                          sx={{
-                            width: 20,
-                            height: 20,
+                      DO NOT CONTACT
+                    </Typography>
+                  )}
+                </AccordionDetails>
+              </Accordion>
+            )}
 
-                            margin: 0.125,
-
-                            color: "white",
-                            backgroundColor: "#1976d2",
-                            borderRadius: 1,
-                          }}
-                        >
-                          <EditIcon
-                            sx={{
-                              width: 15,
-                              height: 15,
-                            }}
-                          />
-                        </IconButton>
-
-                        <IconButton
-                          disabled={company.softLocked}
-                          aria-label="delete contact"
-                          onClick={(e) => handleDeleteContact(e, contact.id)}
-                          sx={{
-                            width: 20,
-                            height: 20,
-
-                            margin: 0.125,
-
-                            color: "white",
-                            backgroundColor: "#1976d2",
-                            borderRadius: 1,
-                          }}
-                        >
-                          <DeleteIcon
-                            sx={{
-                              width: 15,
-                              height: 15,
-                            }}
-                          />
-                        </IconButton>
-                      </Box>
-                    </Box>
-
-                    <List dense>
-                      <ListItem disablePadding>
-                        <ListItemIcon sx={{ minWidth: 25 }}>
-                          <EmailIcon />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={contact.email}
-                          sx={{
-                            overflow: "hidden",
-                          }}
-                        />
-                      </ListItem>
-
-                      <ListItem disablePadding>
-                        <ListItemIcon sx={{ minWidth: 25 }}>
-                          <PhoneIcon />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={contact.tel}
-                          sx={{ overflow: "hidden" }}
-                        />
-                      </ListItem>
-
-                      <ListItem disablePadding>
-                        <ListItemIcon sx={{ minWidth: 25 }}>
-                          <WorkIcon />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={contact.position}
-                          sx={{ overflow: "hidden" }}
-                        />
-                      </ListItem>
-
-                      <ListItem disablePadding>
-                        <ListItemIcon sx={{ minWidth: 25 }}>
-                          <DescriptionIcon />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={contact.description}
-                          sx={{ overflow: "hidden" }}
-                        />
-                      </ListItem>
-                    </List>
-                  </Box>
-                ))}
-
-                <Box sx={{ display: "grid", placeItems: "center" }}>
-                  <Button
-                    variant="contained"
-                    startIcon={<AddCircleIcon />}
-                    onClick={() => setOpenContactFormModal(true)}
+            {/* TODO: user.maxAuthLevel >= 2 
+            || (user.maxAuthLevel >= 1 && user is responsible for that company) */}
+            {user?.maxAuthLevel >= 2 && (
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography
+                    sx={{
+                      textTransform: "uppercase",
+                    }}
                   >
-                    Add contact
-                  </Button>
-                </Box>
-              </AccordionDetails>
-            </Accordion>
+                    Contacts
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  {company.contacts?.length > 0 ? (
+                    company.contacts?.map((contact) => (
+                      <Box key={contact.id} sx={{ marginBlock: 2 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Typography>
+                            {contact.firstName + " " + contact.lastName}
+                          </Typography>
+                          <Box>
+                            {/* TODO: user.maxAuthLevel >= 3 
+                          || (user.maxAuthLevel >= 2 && user is creator of that company) 
+                          || (user.maxAuthLevel >= 1 && user is responsible for that company) */}
+                            {user?.maxAuthLevel >= 3 && (
+                              <IconButton
+                                disabled={company.softLocked}
+                                onClick={handleEditContact(contact.id)}
+                                sx={{
+                                  width: 20,
+                                  height: 20,
+
+                                  margin: 0.125,
+
+                                  color: "white",
+                                  backgroundColor: "#1976d2",
+                                  borderRadius: 1,
+                                }}
+                              >
+                                <EditIcon
+                                  sx={{
+                                    width: 15,
+                                    height: 15,
+                                  }}
+                                />
+                              </IconButton>
+                            )}
+
+                            {/* TODO: user.maxAuthLevel >= 3 
+                          || (user.maxAuthLevel >= 2 && user is creator of that company) 
+                          || (user.maxAuthLevel >= 1 && user is responsible for that company) */}
+                            {user?.maxAuthLevel >= 3 && (
+                              <IconButton
+                                disabled={company.softLocked}
+                                onClick={handleDeleteContact(contact.id)}
+                                sx={{
+                                  width: 20,
+                                  height: 20,
+
+                                  margin: 0.125,
+
+                                  color: "white",
+                                  backgroundColor: "#1976d2",
+                                  borderRadius: 1,
+                                }}
+                              >
+                                <DeleteIcon
+                                  sx={{
+                                    width: 15,
+                                    height: 15,
+                                  }}
+                                />
+                              </IconButton>
+                            )}
+                          </Box>
+                        </Box>
+
+                        <List dense>
+                          <ListItem disablePadding>
+                            <ListItemIcon sx={{ minWidth: 25 }}>
+                              <EmailIcon />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={contact.email}
+                              sx={{
+                                overflow: "hidden",
+                              }}
+                            />
+                          </ListItem>
+
+                          <ListItem disablePadding>
+                            <ListItemIcon sx={{ minWidth: 25 }}>
+                              <PhoneIcon />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={contact.tel}
+                              sx={{ overflow: "hidden" }}
+                            />
+                          </ListItem>
+
+                          <ListItem disablePadding>
+                            <ListItemIcon sx={{ minWidth: 25 }}>
+                              <WorkIcon />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={contact.position}
+                              sx={{ overflow: "hidden" }}
+                            />
+                          </ListItem>
+
+                          <ListItem disablePadding>
+                            <ListItemIcon sx={{ minWidth: 25 }}>
+                              <DescriptionIcon />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={contact.description}
+                              sx={{ overflow: "hidden" }}
+                            />
+                          </ListItem>
+                        </List>
+                      </Box>
+                    ))
+                  ) : (
+                    <Typography variant="h6" align="center" gutterBottom>
+                      {"No contacts :("}
+                    </Typography>
+                  )}
+
+                  {/* TODO: user.maxAuthLevel >= 3 
+                  || (user.maxAuthLevel >= 2 && user is creator of that company) 
+                  || (user.maxAuthLevel >= 1 && user is responsible for that company) */}
+                  {user?.maxAuthLevel >= 3 && (
+                    <Box sx={{ display: "grid", placeItems: "center" }}>
+                      <Button
+                        variant="contained"
+                        startIcon={<AddCircleIcon />}
+                        onClick={() => setOpenContactFormModal(true)}
+                      >
+                        Add contact
+                      </Button>
+                    </Box>
+                  )}
+                </AccordionDetails>
+              </Accordion>
+            )}
           </Box>
         </Box>
 
@@ -617,35 +648,48 @@ export default function Company() {
               setSearchResults={setSearchResults}
             />
 
-            <Button
-              variant="contained"
-              size="medium"
-              startIcon={<AddCircleIcon />}
-              onClick={() => {
-                setCollaboration();
-                setOpenCollaborationFormModal(true);
-              }}
-            >
-              Add collaboration
-            </Button>
-          </Container>
-
-          <Container maxWidth="false">
-            {company.collaborations?.length <= 0 ? (
-              <Typography variant="h4" align="center">
-                {"No collaborations :("}
-              </Typography>
-            ) : (
-              <TableComponent
-                tableColumns={tableColumns}
-                searchResults={searchResults}
-                setSearchResults={setSearchResults}
-                // TODO: handleView={handleView} when we add activites
-                handleEdit={handleEditCollaboration}
-                handleDelete={handleDeleteCollaboration}
-              ></TableComponent>
+            {/* TODO: user.maxAuthLevel >= 4 
+            || (user.maxAuthLevel >= 3 && user is creator of that project) 
+            || (user.maxAuthLevel >= 2 && user is project responsible for that project) */}
+            {user?.maxAuthLevel >= 4 && (
+              <Button
+                variant="contained"
+                size="medium"
+                startIcon={<AddCircleIcon />}
+                onClick={() => {
+                  setCollaboration();
+                  setOpenCollaborationFormModal(true);
+                }}
+              >
+                Add collaboration
+              </Button>
             )}
           </Container>
+
+          {/* TODO: user.maxAuthLevel >= 2 
+          || (user.maxAuthLevel >= 1 && user is responsible for that company) */}
+          {user?.maxAuthLevel >= 2 && (
+            <Container maxWidth="false">
+              {loading ? (
+                <Box sx={{ display: "grid", placeItems: "center" }}>
+                  <CircularProgress size={100} />
+                </Box>
+              ) : company.collaborations?.length > 0 ? (
+                <TableComponent
+                  tableColumns={tableColumns}
+                  searchResults={searchResults}
+                  setSearchResults={setSearchResults}
+                  // TODO: handleView={handleView} when we add activites
+                  handleEdit={handleEditCollaboration}
+                  handleDelete={handleDeleteCollaboration}
+                />
+              ) : (
+                <Typography variant="h4" align="center">
+                  {"No collaborations :("}
+                </Typography>
+              )}
+            </Container>
+          )}
         </Box>
       </Box>
     </>

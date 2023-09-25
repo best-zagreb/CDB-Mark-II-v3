@@ -23,7 +23,11 @@ const tableColumns = [
   { key: "lastName", label: "Surname" },
   { key: "nickname", label: "Nickname", xsHide: true },
   { key: "loginEmail", label: "E-mail", xsHide: true },
-  { key: "authority", label: "Max authorization level", xsHide: true },
+  {
+    key: "authority",
+    label: "Max authorization",
+    xsHide: true,
+  },
 ];
 
 export default function Users() {
@@ -120,17 +124,19 @@ export default function Users() {
           setSearchResults={setSearchResults}
         />
 
-        <Button
-          variant="contained"
-          size="medium"
-          startIcon={<AddCircleIcon />}
-          onClick={() => {
-            setUser();
-            setOpenFormModal(true);
-          }}
-        >
-          Add user
-        </Button>
+        {user?.maxAuthLevel >= 4 && (
+          <Button
+            variant="contained"
+            size="medium"
+            startIcon={<AddCircleIcon />}
+            onClick={() => {
+              setUser();
+              setOpenFormModal(true);
+            }}
+          >
+            Add user
+          </Button>
+        )}
       </Container>
 
       <Container maxWidth="false">
@@ -138,19 +144,21 @@ export default function Users() {
           <Box sx={{ display: "grid", placeItems: "center" }}>
             <CircularProgress size={100} />
           </Box>
-        ) : data?.length <= 0 ? (
-          <Typography variant="h4" align="center">
-            {"No users :("}
-          </Typography>
-        ) : (
+        ) : data?.length > 0 ? (
           <TableComponent
             tableColumns={tableColumns}
             searchResults={searchResults}
             setSearchResults={setSearchResults}
             handleView={handleView}
-            handleEdit={handleEdit}
-            handleDelete={handleDelete}
-          ></TableComponent>
+            // TODO: user.maxAuthLevel >= 4
+            // || (user.maxAuthLevel >= 0 && user himself)
+            handleEdit={user?.maxAuthLevel >= 4 && handleEdit}
+            handleDelete={user?.maxAuthLevel >= 4 && handleDelete}
+          />
+        ) : (
+          <Typography variant="h4" align="center">
+            {"No users :("}
+          </Typography>
         )}
       </Container>
     </>
