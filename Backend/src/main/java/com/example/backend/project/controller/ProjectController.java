@@ -41,6 +41,23 @@ public class ProjectController {
         }
     }
 
+    @PatchMapping("/{projectId}/projectMembers")
+    public ResponseEntity setProjectMembers(@RequestHeader String googleTokenEncoded, @PathVariable Long projectId,
+                                                     @RequestBody List<Long> projectMembers){
+        AppUser user = getUser(googleTokenEncoded);
+        try
+        {
+            projectService.setProjectMembers(user, projectId, projectMembers);
+            return new ResponseEntity(HttpStatus.OK);
+        } catch (AuthenticationException e)
+        {
+            return new ResponseEntity(e.getMessage(), HttpStatus.FORBIDDEN);
+        } catch (EntityNotFoundException e)
+        {
+            return new ResponseEntity(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
+
     @PatchMapping("/{projectId}/softLock")
     public ResponseEntity<Boolean> softLockProject(@RequestHeader String googleTokenEncoded, @PathVariable Long projectId){
         AppUser user = getUser(googleTokenEncoded);

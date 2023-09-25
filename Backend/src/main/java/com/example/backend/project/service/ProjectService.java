@@ -17,10 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.backend.util.Helper;
 
 import javax.naming.AuthenticationException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Service @Transactional
 @AllArgsConstructor
@@ -187,5 +184,31 @@ public class ProjectService {
         String errorMessage = "Project with id " + id + " does not exist";
         Project project = Helper.getValue(projectRepository.findById(id), errorMessage);
         return project.getIdCreator().equals(user.getId()) || project.getFRResp().getId().equals(user.getId());
+    }
+
+    public void setProjectMembers(AppUser user, Long id, List<Long> projectMembers) throws AuthenticationException, EntityNotFoundException
+    {
+        Helper.checkUserAuthorities(user, List.of(AUTHORITY.ADMINISTRATOR));
+
+        if (List.of(AUTHORITY.FR_RESPONSIBLE, AUTHORITY.MODERATOR).contains(user.getAuthority())){
+            if (!isResponsibleOrModeratorOnProject(user, id)){
+                throw new AuthenticationException("You do not have permission to execute this command.");
+            }
+        }
+
+        String errorMessage = "Project with id " + id + " does not exist";
+        Project project = Helper.getValue(projectRepository.findById(id), errorMessage);
+        Set<AppUser> newFrteammembers = project.getFrteammembers();
+        newFrteammembers.clear();
+        for (Long memberId : projectMembers)
+        {
+            if (memberId != null)
+            {
+                user = Helper.getValue(userRepository.findById(memberId), "User under id " + memberId + " not found.");
+                newFrteammembers.add(user);
+            }
+        }
+        project.setFrteammembers(newFrteammembers);
+        projectRepository.save(project);
     }
 }

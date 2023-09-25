@@ -11,7 +11,9 @@ export default function CustomAutocomplete({
   helperText = "",
   formData,
   setFormData,
+  listIndex = null
 }) {
+  var entityValue = listIndex === null ? formData.entity[entityKey] : formData.entity[entityKey][listIndex]
   return (
     <Autocomplete
       options={options}
@@ -19,7 +21,7 @@ export default function CustomAutocomplete({
       openOnFocus
       disabled={disabledCondition}
       value={
-        options.find((option) => option.id === formData.entity[entityKey]) ||
+        options.find((option) => option.id === entityValue) ||
         null
       }
       getOptionLabel={formatter}
@@ -30,30 +32,65 @@ export default function CustomAutocomplete({
         )
       }
       onChange={(e, newValue) => {
-        if (newValue) {
-          setFormData((prevData) => ({
-            entity: {
-              ...prevData.entity,
-              [entityKey]: newValue.id,
-            },
-            validation: {
-              ...prevData.validation,
-              [validationKey]: options.some(
-                (option) => option.id === newValue.id
-              ),
-            },
-          }));
-        } else {
-          setFormData((prevData) => ({
-            entity: {
-              ...prevData.entity,
-              [entityKey]: null,
-            },
-            validation: {
-              ...prevData.validation,
-              [validationKey]: false,
-            },
-          }));
+        if (listIndex === null)
+        {
+            if (newValue) {
+              setFormData((prevData) => ({
+                entity: {
+                  ...prevData.entity,
+                  [entityKey]: newValue.id,
+                },
+                validation: {
+                  ...prevData.validation,
+                  [validationKey]: options.some(
+                    (option) => option.id === newValue.id
+                  ),
+                },
+              }));
+            } else {
+              setFormData((prevData) => ({
+                entity: {
+                  ...prevData.entity,
+                  [entityKey]: null,
+                },
+                validation: {
+                  ...prevData.validation,
+                  [validationKey]: false,
+                },
+              }));
+            }
+        }
+        else
+        {
+            if (newValue) {
+              setFormData((prevData) => {
+                const newData = {
+                    entity: {
+                      ...prevData.entity,
+                    },
+                    validation: {
+                      ...prevData.validation,
+                      [validationKey]: options.some((option) => option.id === newValue.id),
+                    },
+                };
+                newData.entity[entityKey][listIndex] = newValue.id;
+                return newData;
+              });
+            } else {
+              setFormData((prevData) => {
+                const newData = {
+                    entity: {
+                      ...prevData.entity,
+                    },
+                    validation: {
+                      ...prevData.validation,
+                      [validationKey]: false,
+                    },
+                };
+                newData.entity[entityKey][listIndex] = null;
+                return newData;
+              });
+            }
         }
       }}
       renderInput={(params) => (

@@ -268,23 +268,26 @@ export default function CollaborationForm({
     const JWToken = JSON.parse(localStorage.getItem("loginInfo")).JWT;
 
     try {
-      const serverResponse = await fetch(
-        "/api/companies/" + formData.companyId,
-        {
-          method: "GET",
-          headers: { googleTokenEncoded: JWToken.credential },
-        }
-      );
+      if (formData?.companyId != null)
+      {
+          const serverResponse = await fetch(
+            "/api/companies/" + formData.companyId,
+            {
+              method: "GET",
+              headers: { googleTokenEncoded: JWToken.credential },
+            }
+          );
 
-      if (serverResponse.ok) {
-        const json = await serverResponse.json();
+          if (serverResponse.ok) {
+            const json = await serverResponse.json();
 
-        setCompanyContacts(json.contacts);
-      } else {
-        handleOpenToast({
-          type: "error",
-          info: "A server error occurred whilst fetching selected company contacts.",
-        });
+            setCompanyContacts(json.contacts);
+          } else {
+            handleOpenToast({
+              type: "error",
+              info: "A server error occurred whilst fetching selected company contacts.",
+            });
+          }
       }
     } catch (error) {
       handleOpenToast({

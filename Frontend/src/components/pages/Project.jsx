@@ -18,6 +18,7 @@ import {
   ExpandMore as ExpandMoreIcon,
   AddCircle as AddCircleIcon,
   Edit as EditIcon,
+  Group as GroupIcon,
   Delete as DeleteIcon,
   Lock as LockIcon,
   LockOpen as LockOpenIcon,
@@ -34,6 +35,7 @@ import DeleteAlertContext from "../../context/DeleteAlertContext";
 
 import CollaborationForm from "../forms/CollaborationForm";
 import ProjectForm from "../forms/ProjectForm";
+import ManageTeamForm from "../forms/ManageTeamForm";
 
 import SearchBar from "./partial/SearchBar";
 import TableComponent from "./partial/TableComponent";
@@ -94,6 +96,7 @@ export default function Project() {
     useContext(DeleteAlertContext);
 
   const [openProjectFormModal, setOpenProjectFormModal] = useState(false);
+  const [openManageTeamFormModal, setOpenManageTeamFormModal] = useState(false);
   const [project, setProject] = useState([]);
   const [openCollaborationFormModal, setOpenCollaborationFormModal] =
     useState(false);
@@ -138,6 +141,10 @@ export default function Project() {
 
   function handleEditProject() {
     setOpenProjectFormModal(true);
+  }
+
+  function handleManageProject() {
+    setOpenManageTeamFormModal(true);
   }
 
   function navigateProjects() {
@@ -213,6 +220,14 @@ export default function Project() {
         setOpenModal={setOpenProjectFormModal}
         fetchUpdatedData={fetchProject}
         object={project}
+      />
+
+      <ManageTeamForm
+        openModal={openManageTeamFormModal}
+        setOpenModal={setOpenManageTeamFormModal}
+        object={project.frTeamMembers}
+        projectId={project.id}
+        fetchUpdatedData={fetchProject}
       />
 
       <CollaborationForm
@@ -300,6 +315,21 @@ export default function Project() {
                     <LockIcon />
                   )}
                 </IconButton>
+              </Tooltip>
+              <Tooltip title="Manage team members" key="Manage team members">
+                  <IconButton
+                    size="small"
+                    disabled={project.softLocked}
+                    onClick={handleManageProject}
+                    sx={{
+                      color: "white",
+                      backgroundColor: "#1976d2",
+
+                      borderRadius: 1,
+                    }}
+                  >
+                    <GroupIcon />
+                  </IconButton>
               </Tooltip>
               <Tooltip title="Edit" key="Edit">
                 <IconButton
@@ -429,7 +459,6 @@ export default function Project() {
                 </List>
               </AccordionDetails>
             </Accordion>
-
             <Accordion
               sx={{
                 marginBlock: 2,
